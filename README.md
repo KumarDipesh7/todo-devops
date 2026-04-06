@@ -28,7 +28,7 @@ make stop     # when done for the day
 Run this entire block in your terminal:
 
 ```bash
-mkdir -p ~/todo-devops/{src/main/{java/com/todo/{controller,model},resources},frontend,helm/todo-app/templates,terraform}
+mkdir -p ~/todo-devops/{src/main/{java/com/todo/{controller,model},resources},frontend,helm/todo-app/templates}
 cd ~/todo-devops
 ```
 
@@ -79,15 +79,6 @@ kubectl version --client
 ```bash
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 helm version
-```
-
-### Terraform
-```bash
-sudo apt install -y gnupg software-properties-common
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt update && sudo apt install -y terraform
-terraform -version
 ```
 
 ### Jenkins
@@ -163,22 +154,7 @@ docker build -t todo-frontend:latest ./frontend
 docker images | grep todo
 ```
 
----
 
-## Step 7 — Run Terraform to create namespace + deploy via Helm
-
-```bash
-cd ~/todo-devops/terraform
-
-# Download the Terraform providers
-terraform init
-
-# Preview what Terraform will do
-terraform plan
-
-# Apply it (creates namespace + deploys Helm chart)
-terraform apply -auto-approve
-```
 
 ---
 
@@ -260,7 +236,7 @@ git commit -m "initial commit"
 ### 5. Run the pipeline
 
 - Click **Build Now** in Jenkins
-- Watch each stage: Checkout → Maven → Docker → Terraform → Verify → Smoke Test
+- Watch each stage: Checkout → Maven → Docker → Verify → Smoke Test
 
 ---
 
@@ -281,10 +257,6 @@ kubectl logs -n todo-app deployment/todo-backend
 
 # Restart a deployment (simulates a redeploy)
 kubectl rollout restart deployment/todo-backend -n todo-app
-
-# Destroy everything (Terraform tears it all down)
-cd ~/todo-devops/terraform
-terraform destroy -auto-approve
 
 # Stop Minikube
 minikube stop
@@ -318,10 +290,6 @@ todo-devops/
 │       └── templates/
 │           ├── backend.yaml
 │           └── frontend.yaml
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   └── outputs.tf
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Jenkinsfile

@@ -41,24 +41,19 @@ pipeline {
             }
         }
 
-        stage('Terraform Init') {
+        stage('Helm Deploy') {
             steps {
-                echo "Initialising Terraform..."
-                dir('terraform') {
-                    sh 'terraform init -input=false'
-                }
+                echo "Deploying to Kubernetes via Helm..."
+                sh '''
+                    helm upgrade --install todo-app ./helm/todo-app \
+                        --namespace todo-app \
+                        --create-namespace \
+                        --set backend.tag=${IMAGE_TAG} \
+                        --set frontend.tag=${IMAGE_TAG}
+                '''
             }
         }
-
-        stage('Terraform Apply') {
-            steps {
-                echo "Applying infrastructure with Terraform..."
-                dir('terraform') {
-                    sh 'terraform apply -auto-approve -var="image_tag=${IMAGE_TAG}"'
-                }
-            }
-        }
-
+        
         stage('Verify Deployment') {
             steps {
                 echo "Waiting for pods to be ready..."
