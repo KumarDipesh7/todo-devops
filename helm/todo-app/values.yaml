@@ -11,17 +11,4 @@ backend:
       memory: "256Mi"
       cpu: "250m"
 
-frontend:
-  image: todo-frontend
-  tag: latest
-  replicas: 1
-  port: 80
-  resources:
-    requests:
-      memory: "64Mi"
-      cpu: "50m"
-    limits:
-      memory: "128Mi"
-      cpu: "100m"
-
 namespace: todo-app

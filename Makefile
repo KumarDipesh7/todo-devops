@@ -1,6 +1,5 @@
 NAMESPACE   = todo-app
 BACKEND_IMG = todo-backend
-FRONTEND_IMG= todo-frontend
 JENKINS_WAR = $(HOME)/jenkins.war
 JENKINS_PORT= 9090
 
@@ -18,14 +17,12 @@ setup:
 	mvn clean package -DskipTests -q
 	@echo "==> Building Docker images inside Minikube..."
 	eval $$(minikube docker-env) && \
-		docker build -t $(BACKEND_IMG):latest . && \
-		docker build -t $(FRONTEND_IMG):latest ./frontend
+		docker build -t $(BACKEND_IMG):latest .
 	@echo ""
 	@echo "==> Deploying with Helm..."
 	kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	helm upgrade --install $(NAMESPACE) ./helm/todo-app -n $(NAMESPACE)
 	kubectl rollout status deployment/todo-backend -n $(NAMESPACE) --timeout=90s
-	kubectl rollout status deployment/todo-frontend -n $(NAMESPACE) --timeout=90s
 	@echo ""
 	@echo "==> Done! Run 'make open' to open the app."
 
@@ -52,27 +49,26 @@ run:
 open:
 	@echo "==> Opening Jenkins..."
 	-xdg-open http://localhost:$(JENKINS_PORT) >/dev/null 2>&1 &
-	@echo "==> Opening Frontend..."
-	-pkill -f "kubectl port-forward.*30080:80" || true
-	kubectl port-forward -n $(NAMESPACE) svc/todo-frontend-service 30080:80 >/dev/null 2>&1 &
-	sleep 2
-	-xdg-open http://localhost:30080 >/dev/null 2>&1 &
+	@echo "==> Opening Backend Tunnel & Client..."
+	-pkill -f "kubectl port-forward.*8080:8080" || true
+	kubectl port-forward -n $(NAMESPACE) svc/todo-backend-service 8080:8080 >/dev/null 2>&1 &
+	@echo "==> Waiting for backend API to be available on localhost:8080..."
+	@until curl -s -f -o /dev/null "http://127.0.0.1:8080/todos/health"; do sleep 1; done
+	@echo "==> Connected! Launching JavaFX..."
+	mvn exec:java -Dexec.mainClass="com.todo.client.TodoClientLauncher"
 
 deploy:
 	@echo ""
 	@echo "==> Rebuilding images..."
 	mvn clean package -DskipTests -q
 	eval $$(minikube docker-env) && \
-		docker build -t $(BACKEND_IMG):latest . && \
-		docker build -t $(FRONTEND_IMG):latest ./frontend
+		docker build -t $(BACKEND_IMG):latest .
 	@echo ""
 	@echo "==> Deploying changes with Helm..."
 	helm upgrade --install $(NAMESPACE) ./helm/todo-app -n $(NAMESPACE)
 	@echo "==> Restarting pods..."
 	kubectl rollout restart deployment/todo-backend  -n $(NAMESPACE)
-	kubectl rollout restart deployment/todo-frontend -n $(NAMESPACE)
 	kubectl rollout status  deployment/todo-backend  -n $(NAMESPACE) --timeout=90s
-	kubectl rollout status  deployment/todo-frontend -n $(NAMESPACE) --timeout=90s
 	@echo ""
 	@echo "==> Deployed! Run 'make open' to view."
 
@@ -92,16 +88,13 @@ status:
 
 logs:
 	@echo "==> Backend logs:"
-	kubectl logs -n $(NAMESPACE) deployment/todo-backend --tail=30
-	@echo ""
-	@echo "==> Frontend logs:"
-	kubectl logs -n $(NAMESPACE) deployment/todo-frontend --tail=20
+	kubectl logs -n $(NAMESPACE) deployment/todo-backend --tail=50
 
 stop:
 	@echo "==> Stopping Jenkins..."
 	@kill $$(lsof -t -i:$(JENKINS_PORT)) 2>/dev/null && echo "    Jenkins stopped." || echo "    Jenkins was not running."
 	@echo "==> Stopping Port-Forward..."
-	-pkill -f "kubectl port-forward.*30080:80" || true
+	-pkill -f "kubectl port-forward.*8080:8080" || true
 	@echo "==> Stopping Minikube..."
 	minikube stop
 	@echo "==> All stopped."
@@ -113,9 +106,7 @@ clean:
 
 restart:
 	kubectl rollout restart deployment/todo-backend  -n $(NAMESPACE)
-	kubectl rollout restart deployment/todo-frontend -n $(NAMESPACE)
 	kubectl rollout status  deployment/todo-backend  -n $(NAMESPACE) --timeout=90s
-	kubectl rollout status  deployment/todo-frontend -n $(NAMESPACE) --timeout=90s
 	@echo "==> Pods restarted and ready!"
 
 help:

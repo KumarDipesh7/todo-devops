@@ -4,7 +4,6 @@ pipeline {
     environment {
         IMAGE_TAG = "build-${BUILD_NUMBER}"
         BACKEND_IMAGE  = "todo-backend"
-        FRONTEND_IMAGE = "todo-frontend"
     }
 
     stages {
@@ -36,7 +35,6 @@ pipeline {
                 sh '''
                     eval $(minikube docker-env)
                     docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG}  -t ${BACKEND_IMAGE}:latest .
-                    docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -t ${FRONTEND_IMAGE}:latest ./frontend
                 '''
             }
         }
@@ -48,8 +46,7 @@ pipeline {
                     helm upgrade --install todo-app ./helm/todo-app \
                         --namespace todo-app \
                         --create-namespace \
-                        --set backend.tag=${IMAGE_TAG} \
-                        --set frontend.tag=${IMAGE_TAG}
+                        --set backend.tag=${IMAGE_TAG}
                 '''
             }
         }
@@ -59,7 +56,6 @@ pipeline {
                 echo "Waiting for pods to be ready..."
                 sh '''
                     kubectl rollout status deployment/todo-backend  -n todo-app --timeout=90s
-                    kubectl rollout status deployment/todo-frontend -n todo-app --timeout=90s
                 '''
                 echo "All pods are running!"
             }
@@ -80,8 +76,7 @@ pipeline {
         success {
             echo """
             Deployment successful!
-            Run: minikube service todo-frontend-service -n todo-app
-            to open the app in your browser.
+            Run 'make open' to start the local client.
             """
         }
         failure {
