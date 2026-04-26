@@ -53,7 +53,10 @@ open:
 	@echo "==> Opening Jenkins..."
 	-xdg-open http://localhost:$(JENKINS_PORT) >/dev/null 2>&1 &
 	@echo "==> Opening Frontend..."
-	minikube service todo-frontend-service -n $(NAMESPACE)
+	-pkill -f "kubectl port-forward.*30080:80" || true
+	kubectl port-forward -n $(NAMESPACE) svc/todo-frontend-service 30080:80 >/dev/null 2>&1 &
+	sleep 2
+	-xdg-open http://localhost:30080 >/dev/null 2>&1 &
 
 deploy:
 	@echo ""
@@ -97,6 +100,8 @@ logs:
 stop:
 	@echo "==> Stopping Jenkins..."
 	@kill $$(lsof -t -i:$(JENKINS_PORT)) 2>/dev/null && echo "    Jenkins stopped." || echo "    Jenkins was not running."
+	@echo "==> Stopping Port-Forward..."
+	-pkill -f "kubectl port-forward.*30080:80" || true
 	@echo "==> Stopping Minikube..."
 	minikube stop
 	@echo "==> All stopped."
