@@ -55,7 +55,7 @@ pipeline {
             steps {
                 echo "Waiting for pods to be ready..."
                 sh '''
-                    kubectl rollout status deployment/todo-backend  -n todo-app --timeout=90s
+                    kubectl rollout status deployment/todo-backend  -n todo-app --timeout=180s
                 '''
                 echo "All pods are running!"
             }

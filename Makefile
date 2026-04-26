@@ -22,7 +22,7 @@ setup:
 	@echo "==> Deploying with Helm..."
 	kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	helm upgrade --install $(NAMESPACE) ./helm/todo-app -n $(NAMESPACE)
-	kubectl rollout status deployment/todo-backend -n $(NAMESPACE) --timeout=90s
+	kubectl rollout status deployment/todo-backend -n $(NAMESPACE) --timeout=180s
 	@echo ""
 	@echo "==> Done! Run 'make open' to open the app."
 
@@ -66,9 +66,7 @@ deploy:
 	@echo ""
 	@echo "==> Deploying changes with Helm..."
 	helm upgrade --install $(NAMESPACE) ./helm/todo-app -n $(NAMESPACE)
-	@echo "==> Restarting pods..."
-	kubectl rollout restart deployment/todo-backend  -n $(NAMESPACE)
-	kubectl rollout status  deployment/todo-backend  -n $(NAMESPACE) --timeout=90s
+	kubectl rollout status  deployment/todo-backend  -n $(NAMESPACE) --timeout=180s
 	@echo ""
 	@echo "==> Deployed! Run 'make open' to view."
 
