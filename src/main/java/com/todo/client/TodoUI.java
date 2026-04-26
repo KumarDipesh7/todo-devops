@@ -52,13 +52,9 @@ public class TodoUI extends Application {
         header.setPadding(new Insets(28, 28, 20, 28));
         header.setStyle("-fx-background-color: #16213e;");
 
-        Label title = new Label("✓ Todo App");
+        Label title = new Label("Todo App");
         title.setFont(Font.font("System", FontWeight.BOLD, 26));
-        title.setStyle("-fx-text-fill: #e2e8f0;");
-
-        Label subtitle = new Label("Deployed via Jenkins → Docker → Kubernetes");
-        subtitle.setFont(Font.font("System", 12));
-        subtitle.setStyle("-fx-text-fill: #64748b;");
+        title.setStyle("-fx-text-fill: #e2e8f0;");]
 
         header.getChildren().addAll(title, subtitle);
         root.setTop(header);
