@@ -37,13 +37,13 @@ spec:
             httpGet:
               path: /todos/health
               port: {{ .Values.backend.port }}
-            initialDelaySeconds: 10
+            initialDelaySeconds: 60
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /todos/health
               port: {{ .Values.backend.port }}
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 10
 ---
 apiVersion: v1
