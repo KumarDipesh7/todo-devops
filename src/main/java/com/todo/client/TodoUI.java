@@ -54,11 +54,7 @@ public class TodoUI extends Application {
 
         Label title = new Label("Todo App");
         title.setFont(Font.font("System", FontWeight.BOLD, 26));
-        title.setStyle("-fx-text-fill: #e2e8f0;");]
-
-        header.getChildren().addAll(title, subtitle);
-        root.setTop(header);
-
+        title.setStyle("-fx-text-fill: #e2e8f0;");
         // ── Input Row ─────────────────────────────────────────────────────────
         HBox inputRow = new HBox(10);
         inputRow.setPadding(new Insets(16, 20, 14, 20));
