@@ -79,11 +79,9 @@ pipeline {
     post {
         success {
             echo """
-            ============================================
             Deployment successful!
             Run: minikube service todo-frontend-service -n todo-app
             to open the app in your browser.
-            ============================================
             """
         }
         failure {

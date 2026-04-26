@@ -14,6 +14,8 @@ setup:
 	@echo "==> Starting Minikube..."
 	minikube start --driver=docker --memory=3000 --cpus=2
 	@echo ""
+	@echo "==> Building Maven project..."
+	mvn clean package -DskipTests -q
 	@echo "==> Building Docker images inside Minikube..."
 	eval $$(minikube docker-env) && \
 		docker build -t $(BACKEND_IMG):latest . && \
@@ -22,6 +24,8 @@ setup:
 	@echo "==> Deploying with Helm..."
 	kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	helm upgrade --install $(NAMESPACE) ./helm/todo-app -n $(NAMESPACE)
+	kubectl rollout status deployment/todo-backend -n $(NAMESPACE) --timeout=90s
+	kubectl rollout status deployment/todo-frontend -n $(NAMESPACE) --timeout=90s
 	@echo ""
 	@echo "==> Done! Run 'make open' to open the app."
 
@@ -54,6 +58,7 @@ open:
 deploy:
 	@echo ""
 	@echo "==> Rebuilding images..."
+	mvn clean package -DskipTests -q
 	eval $$(minikube docker-env) && \
 		docker build -t $(BACKEND_IMG):latest . && \
 		docker build -t $(FRONTEND_IMG):latest ./frontend
