@@ -15,9 +15,10 @@ setup:
 	@echo ""
 	@echo "==> Building Maven project..."
 	mvn clean package -DskipTests -q
-	@echo "==> Building Docker images inside Minikube..."
-	eval $$(minikube docker-env) && \
-		docker build -t $(BACKEND_IMG):latest .
+	@echo "==> Building Docker image on host and loading it into Minikube..."
+	eval $$(minikube docker-env -u) && \
+		docker build -t $(BACKEND_IMG):latest . && \
+		minikube image load $(BACKEND_IMG):latest
 	@echo ""
 	@echo "==> Deploying with Helm..."
 	kubectl create namespace $(NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
@@ -61,8 +62,9 @@ deploy:
 	@echo ""
 	@echo "==> Rebuilding images..."
 	mvn clean package -DskipTests -q
-	eval $$(minikube docker-env) && \
-		docker build -t $(BACKEND_IMG):latest .
+	eval $$(minikube docker-env -u) && \
+		docker build -t $(BACKEND_IMG):latest . && \
+		minikube image load $(BACKEND_IMG):latest
 	@echo ""
 	@echo "==> Deploying changes with Helm..."
 	helm upgrade --install $(NAMESPACE) ./helm/todo-app -n $(NAMESPACE)

@@ -26,6 +26,9 @@ spec:
           imagePullPolicy: Never   # use local Minikube image
           ports:
             - containerPort: {{ .Values.backend.port }}
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75.0"
           resources:
             requests:
               memory: {{ .Values.backend.resources.requests.memory }}

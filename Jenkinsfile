@@ -31,10 +31,11 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo "Building Docker images..."
-                // Load images directly into Minikube's Docker daemon
+                // Build with the host Docker daemon, then import into Minikube.
                 sh '''
-                    eval $(minikube docker-env)
+                    eval $(minikube docker-env -u)
                     docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG}  -t ${BACKEND_IMAGE}:latest .
+                    minikube image load ${BACKEND_IMAGE}:${IMAGE_TAG}
                 '''
             }
         }
