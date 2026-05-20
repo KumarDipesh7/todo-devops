@@ -2,10 +2,12 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG     = "build-${BUILD_NUMBER}"
-        BACKEND_IMAGE = "todo-backend"
+        IMAGE_TAG      = "build-${BUILD_NUMBER}"
+        BACKEND_IMAGE  = "todo-backend"
         FRONTEND_IMAGE = "todo-frontend"
-        WORKSPACE_DIR = "/home/dipeshkumar/devops/todo-devops"
+        WORKSPACE_DIR  = "/home/dipeshkumar/devops/todo-devops"
+        JAVA_HOME      = "/usr/lib/jvm/java-17-openjdk-amd64"
+        PATH           = "/usr/lib/jvm/java-17-openjdk-amd64/bin:${env.PATH}"
     }
 
     stages {
