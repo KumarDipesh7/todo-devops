@@ -57,16 +57,16 @@ pipeline {
             steps {
                 echo "Waiting for backend to be ready..."
                 sh '''
-                    for i in $(seq 1 15); do
-                        STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/todos/health)
+                    for i in $(seq 1 20); do
+                        STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/todos/health || echo "000")
+                        echo "Attempt $i/20 - status: $STATUS"
                         if [ "$STATUS" = "200" ]; then
                             echo "Health check passed!"
                             exit 0
                         fi
-                        echo "Waiting... attempt $i"
                         sleep 3
                     done
-                    echo "Health check failed after 45s"
+                    echo "Health check failed after 60s"
                     exit 1
                 '''
             }
