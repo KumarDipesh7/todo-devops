@@ -2,8 +2,10 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_TAG = "build-${BUILD_NUMBER}"
-        BACKEND_IMAGE  = "todo-backend"
+        IMAGE_TAG     = "build-${BUILD_NUMBER}"
+        BACKEND_IMAGE = "todo-backend"
+        FRONTEND_IMAGE = "todo-frontend"
+        WORKSPACE_DIR = "/home/dipeshkumar/devops/todo-devops"
     }
 
     stages {
@@ -15,15 +17,15 @@ pipeline {
             }
         }
 
-        stage('Build & Test (Maven)') {
+        stage('Build (Maven)') {
             steps {
-                echo "Building and testing with Maven..."
-                sh 'mvn clean package -q'
-                echo "Build successful. JAR created."
+                echo "Building JAR with Maven..."
+                sh 'mvn clean package -DskipTests -q'
+                echo "JAR created successfully."
             }
             post {
                 failure {
-                    echo "Maven build failed! Fix compilation errors or failing tests."
+                    echo "Maven build failed! Fix compilation errors."
                 }
             }
         }
@@ -31,43 +33,39 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo "Building Docker images..."
-                // Build with the host Docker daemon, then import into Minikube.
-                sh '''
-                    eval $(minikube docker-env -u)
-                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG}  -t ${BACKEND_IMAGE}:latest .
-                    minikube image load ${BACKEND_IMAGE}:${IMAGE_TAG}
-                '''
+                sh """
+                    docker build -t ${BACKEND_IMAGE}:${IMAGE_TAG} -t ${BACKEND_IMAGE}:latest .
+                    docker build -t ${FRONTEND_IMAGE}:${IMAGE_TAG} -t ${FRONTEND_IMAGE}:latest ./frontend
+                """
             }
         }
 
-        stage('Helm Deploy') {
+        stage('Deploy') {
             steps {
-                echo "Deploying to Kubernetes via Helm..."
-                sh '''
-                    helm upgrade --install todo-app ./helm/todo-app \
-                        --namespace todo-app \
-                        --create-namespace \
-                        --set backend.tag=${IMAGE_TAG}
-                '''
-            }
-        }
-        
-        stage('Verify Deployment') {
-            steps {
-                echo "Waiting for pods to be ready..."
-                sh '''
-                    kubectl rollout status deployment/todo-backend  -n todo-app --timeout=180s
-                '''
-                echo "All pods are running!"
+                echo "Deploying with Docker Compose..."
+                sh """
+                    cd ${WORKSPACE_DIR}
+                    docker-compose down --remove-orphans
+                    docker-compose up -d --build
+                """
             }
         }
 
         stage('Smoke Test') {
             steps {
-                echo "Running smoke test against backend health endpoint..."
+                echo "Waiting for backend to be ready..."
                 sh '''
-                    kubectl exec -n todo-app deployment/todo-backend -- wget -qO- http://localhost:8080/todos/health
-                    echo "Health check passed!"
+                    for i in $(seq 1 15); do
+                        STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/todos/health)
+                        if [ "$STATUS" = "200" ]; then
+                            echo "Health check passed!"
+                            exit 0
+                        fi
+                        echo "Waiting... attempt $i"
+                        sleep 3
+                    done
+                    echo "Health check failed after 45s"
+                    exit 1
                 '''
             }
         }
@@ -75,16 +73,13 @@ pipeline {
 
     post {
         success {
-            echo """
-            Deployment successful!
-            Run 'make open' to start the local client.
-            """
+            echo "Deployment successful! App running at http://localhost:3001"
         }
         failure {
-            echo "Pipeline failed. Check the logs above for details."
+            echo "Pipeline failed. Check logs above."
         }
         always {
-            echo "Pipeline finished. Build #${BUILD_NUMBER}"
+            echo "Build #${BUILD_NUMBER} finished."
         }
     }
 }

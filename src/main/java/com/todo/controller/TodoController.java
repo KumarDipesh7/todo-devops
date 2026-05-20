@@ -36,6 +36,15 @@ public class TodoController {
                 .orElseThrow(() -> new RuntimeException("Todo not found"));
     }
 
+    @PutMapping("/{id}")
+    public Todo update(@PathVariable Long id, @RequestBody Todo body) {
+        return todos.stream()
+                .filter(t -> t.getId().equals(id))
+                .findFirst()
+                .map(t -> { t.setCompleted(body.isCompleted()); return t; })
+                .orElseThrow(() -> new RuntimeException("Todo not found"));
+    }
+
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         todos.removeIf(t -> t.getId().equals(id));
